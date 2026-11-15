@@ -1,13 +1,21 @@
 from pathlib import Path
 import joblib
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.naive_bayes import MultinomialNB
 from preprocessing import load_and_preprocess_data
 from vectorization import vectorize_text
 
 
 def train_logistic_regression(X_train_tfidf, y_train):
     model = LogisticRegression(max_iter=1000, random_state=42)
+
+    model.fit(X_train_tfidf, y_train)
+
+    return model
+
+
+def train_naive_bayes(X_train_tfidf, y_train):
+    model = MultinomialNB(alpha=1.0)
 
     model.fit(X_train_tfidf, y_train)
 
@@ -29,12 +37,20 @@ def main():
 
     joblib.dump(logistic_model, models_path / "logistic_regression.pkl")
 
-    joblib.dump(vectorizer, models_path / "tfidf_vectorizer.pkl")
-
     print("Logistic Regression training completed successfully!")
     print(f"Training samples: {X_train_tfidf.shape[0]}")
     print(f"Features: {X_train_tfidf.shape[1]}")
     print("Model saved: models/logistic_regression.pkl")
+
+    naive_bayes_model = train_naive_bayes(X_train_tfidf, y_train)
+
+    joblib.dump(naive_bayes_model, models_path / "naive_bayes.pkl")
+
+    print("Multinomial Naive Bayes training completed successfully!")
+    print("Model saved: models/naive_bayes.pkl")
+
+    joblib.dump(vectorizer, models_path / "tfidf_vectorizer.pkl")
+
     print("Vectorizer saved: models/tfidf_vectorizer.pkl")
 
 
