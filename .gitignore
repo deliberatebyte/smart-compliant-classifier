@@ -2,3 +2,4 @@
 dataset/*.csv
 models/*.pkl
 __pycache__/
+.vscode
