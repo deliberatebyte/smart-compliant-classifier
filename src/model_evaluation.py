@@ -1,9 +1,7 @@
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
-
-from typing import cast, Any
-
+from typing import Any, cast
 from pathlib import Path
 from sklearn.metrics import (
     accuracy_score,
@@ -32,13 +30,11 @@ def load_trained_models(project_root):
 
     models_path = project_root / "models"
 
-    logistic_regression = joblib.load(models_path / "logistic_regression.pkl")
-
-    naive_bayes = joblib.load(models_path / "naive_bayes.pkl")
-
     return {
-        "Logistic Regression": logistic_regression,
-        "Multinomial Naive Bayes": naive_bayes,
+        "Logistic Regression": joblib.load(models_path / "logistic_regression.pkl"),
+        "Multinomial Naive Bayes": joblib.load(models_path / "naive_bayes.pkl"),
+        "LinearSVC": joblib.load(models_path / "linear_svc.pkl"),
+        "Complement Naive Bayes": joblib.load(models_path / "complement_nb.pkl"),
     }
 
 
@@ -56,7 +52,12 @@ def evaluate_model(model, X_test, y_test, model_name):
 
     report_dict = cast(
         dict[str, Any],
-        classification_report(y_test, predictions, output_dict=True, zero_division=0),
+        classification_report(
+            y_test,
+            predictions,
+            output_dict=True,
+            zero_division=0,
+        ),
     )
 
     print("\n" + "=" * 65)
@@ -85,13 +86,15 @@ def generate_confusion_matrices(y_test, predictions, results_path):
 
     labels = sorted(y_test.unique())
 
-    fig, axes = plt.subplots(1, 2, figsize=(16, 7))
+    fig, axes = plt.subplots(2, 2, figsize=(18, 14))
 
-    for ax, model_name in zip(axes, predictions):
+    axes = axes.flatten()
+
+    for ax, (model_name, model_predictions) in zip(axes, predictions.items()):
 
         ConfusionMatrixDisplay.from_predictions(
             y_test,
-            predictions[model_name],
+            model_predictions,
             labels=labels,
             display_labels=labels,
             cmap="Blues",
@@ -118,9 +121,9 @@ def compare_models(evaluation_results, results_path):
 
     comparison = pd.DataFrame(evaluation_results).T
 
-    print("\n" + "=" * 65)
+    print("\n" + "=" * 85)
     print("MODEL PERFORMANCE COMPARISON")
-    print("=" * 65)
+    print("=" * 85)
 
     print(comparison.round(4).to_string())
 
@@ -156,7 +159,7 @@ def main():
 
     models = load_trained_models(project_root)
 
-    print("\nSaved models loaded successfully!")
+    print("\nAll four saved models loaded successfully!")
 
     predictions = {}
     evaluation_results = {}
@@ -164,12 +167,22 @@ def main():
     for model_name, model in models.items():
 
         predictions[model_name], evaluation_results[model_name] = evaluate_model(
-            model, X_test_tfidf, y_test, model_name
+            model,
+            X_test_tfidf,
+            y_test,
+            model_name,
         )
 
-    generate_confusion_matrices(y_test, predictions, results_path)
+    generate_confusion_matrices(
+        y_test,
+        predictions,
+        results_path,
+    )
 
-    compare_models(evaluation_results, results_path)
+    compare_models(
+        evaluation_results,
+        results_path,
+    )
 
     print("\nModel evaluation completed successfully!")
 
